@@ -4,8 +4,10 @@
 #include <limits>
 #include <bitset>
 #include <sstream>
+#include <vector>
+#include "Topology.cpp"
 
-//PCAP head: 24b
+//PCAP head: 24byte
 //  4 - magic. a1b2c3d4 или d4c3b2a1
 //  2 - major. Номер версии текущего файла
 //  2 - minor. Дополнительная версия текущего файла
@@ -23,11 +25,11 @@
 //Ethernet
 //  2 - frame control (ver, type, subtype ...)
 //  2 - duration/id
-//  6byte - MAC Destination
-//  6byte - MAC Source
-//  6byte - type. Тип следующего протокола. IPv4 - 0800
-//  64-1500 byte - data
-//  4byte - fcs. CRC32 0xEDB88320
+//  6 - MAC Destination
+//  6 - MAC Source
+//  6 - type. Тип следующего протокола. IPv4 - 0800
+//  64-1500 - data
+//  4 - fcs. CRC32 0xEDB88320
 // 
 
 
@@ -35,30 +37,35 @@ using namespace std;
 using uchar = unsigned char;
 
 void pcap_parser(string);
-unsigned int getCRC32(unsigned char*, unsigned long); // calc FCS
 string int_to_bin(uchar);
 string int_to_hex(unsigned int);
-string get_type(uchar);
 
+bool check_fcs(vector<uchar>);
+unsigned int get_CRC32(vector<uchar>, unsigned long); // calc FCS
+
+void parse_data(vector<uchar>);
+string get_mac(vector<uchar>, int);
+string get_type(string, string);
+
+Topology topology;
 
 int main()
 {
-    string menu = "";
     string file_name = "";
-    while (menu != "0")
-    {
-        cout << "\n\nPath to *.pcap file: ";
-        cin >> file_name;                       //Source/frames1_1.pcap
 
+    std::cout << "\n\nPath to *.pcap file (0 - to exit): ";
+    std::cin >> file_name;                       //Source/frames1_1.pcap
+
+    while (file_name != "0")
+    {
         clock_t time_spent = clock();
         pcap_parser(file_name);
-        cout << "Time elapsed: " << clock() - time_spent + 1 << "ms.\n";
+        std::cout << "Time elapsed: " << clock() - time_spent + 1 << "ms.\n";
 
-
-        cout << "\nType any symbol to load new file, 0 - to exit: ";
-        cin >> menu;
+        topology = Topology();
+        std::cout << "\n\nPath to *.pcap file (0 - to exit): ";
+        std::cin >> file_name;
     }
-
 
     return 0;
 }
@@ -66,14 +73,12 @@ int main()
 
 void pcap_parser(string file_name)
 {
-    int status = 0; //0 - read PCAP and DATA head: 24byte
-                    //1 - read DATA head: 16byte
-                    //3 - read data
-    unsigned short data_len = 24;
-    uchar* data = new uchar[data_len];
+    int mode = 0; //0 - read PCAP head: 24byte
+                  //1 - read DATA head: 16byte
+                  //2 - read data
+    unsigned int data_len;
+    vector<uchar> datagram;
     uchar byte;
-    unsigned short num = 0;
-
     unsigned short num_frames = 0, fcs_ok = 0;
 
 
@@ -82,100 +87,83 @@ void pcap_parser(string file_name)
     pcapFile >> noskipws;   //no skip: " ", "\t", "\n"
     if (!pcapFile.is_open())
     {
-        cout << "Error: couldn't open file. Try again.\n";
+        std::cout << "Error: couldn't open file. Try again.\n";
         return;
     }
 
     while (pcapFile >> byte)
     {
-        data[num] = byte;
-        num++;
+        datagram.push_back(byte);
 
-        if (status == 0 && num == 24) { //pcap header
+        if (mode == 0 && datagram.size() == 24) { //pcap header
+            int link_type = datagram[23] * 16777216 + datagram[22] * 65536 + datagram[21] * 256 + datagram[20];
+            std::cout << "Link type: " << link_type << "\n\n";
 
-            int link_type = data[23] * 16777216 + data[22] * 65536 + data[21] * 256 + data[20];
-            cout << "Link type: " << link_type << "\n\n";
-
-            //change mode to read head data
-            num = 0;
-            status = 1;
-            delete[] data;
-            data = new uchar[16];
+            //change mode: read head data
+            mode = 1;
+            datagram.clear();
         }
-        else if (status == 1 && num == 16) { //data header
+        else if (mode == 1 && datagram.size() == 16) { //data header
             num_frames++;
 
-            data_len = data[15] * 16777216 + data[14] * 65536 + data[13] * 256 + data[12];
+            data_len = datagram[15] * 16777216 + datagram[14] * 65536 + datagram[13] * 256 + datagram[12];
+            std::cout << "Frame: " << num_frames << endl;
+            std::cout << "Data length: " << data_len << endl;
 
-            cout << "Frame: " << num_frames << endl;
-            cout << "Data length: " << data_len << endl;
-
-
-            //change mode to read data
-            num = 0;
-            status = 2;
-            delete[] data;
-            data = new uchar[data_len];
+            //change mode: read data
+            mode = 2;
+            datagram.clear();
         }
-        else if (status == 2 && num == data_len) { //data
-            //check FCS
-            unsigned int fcs = data[data_len - 1] * 16777216 + data[data_len - 2] * 65536 + data[data_len - 3] * 256 + data[data_len - 4];
-
-            if (fcs == getCRC32(data, data_len - 4))
+        else if (mode == 2 && datagram.size() == data_len) { //data(frame 802.11)
+            if (check_fcs(datagram))
             {
                 fcs_ok++;
-                cout << "FCS: OK\n";
+                std::cout << "FCS: OK\n";
 
-                //get type/subtype
-                string type = get_type(data[0]);
-                cout << "\tType/subtype: " << type << endl;
-
-                //get tDuration/ID
-                string duration_id = int_to_hex(data[2] * 256 + data[3]);
-                cout << "\tDuration/ID: " << duration_id << endl;
-
-                //get MAC
-                if (int_to_bin(data[0]).substr(4, 2) == "00") { //if type == Management
-                    string mac_dst = int_to_hex(data[4]) + int_to_hex(data[5]) + int_to_hex(data[6]) +
-                        int_to_hex(data[7]) + int_to_hex(data[8]) + int_to_hex(data[9]);
-                    cout << "\tMAC dst: " << mac_dst << endl;
-
-                    string mac_src = int_to_hex(data[10]) + int_to_hex(data[11]) + int_to_hex(data[12]) +
-                        int_to_hex(data[13]) + int_to_hex(data[14]) + int_to_hex(data[15]);
-                    cout << "\tMAC src: " << mac_src << endl;
-                }
-
-                cout << endl;
+                parse_data(datagram);
             }
             else
             {
-                cout << "FCS: FAIL\n\n";
+                std::cout << "FCS: FAIL\n\n";
             }
 
-            //change mode to read data head
-            num = 0;
-            status = 1;
-            delete[] data;
-            data = new uchar[16];
+            //change mode: read data head
+            mode = 1;
+            datagram.clear();
         }
     }
     pcapFile.close();
-    delete[] data;
+    datagram.clear();
 
-
-    //Stat
+    //Statistics
     float fcs_ok_prop = 0;
     if (fcs_ok != 0)
     {
-        fcs_ok_prop = (double)fcs_ok / num_frames * 100;
+        fcs_ok_prop = (float)fcs_ok / num_frames * 100;
     }
-    cout << "\n\nNumber of frames: " << num_frames << "\n";
-    cout << "FCS OK: " << fcs_ok << "(" << fcs_ok_prop << "%)\n";
-    cout << "FCS FAIL: " << num_frames - fcs_ok << "(" << 100 - fcs_ok_prop << "%)\n";
+    std::cout << "\n\nNumber of frames: " << num_frames << "\n";
+    std::cout << "FCS OK: " << fcs_ok << "(" << fcs_ok_prop << "%)\n";
+    std::cout << "FCS FAIL: " << num_frames - fcs_ok << "(" << 100 - fcs_ok_prop << "%)\n";
+
+    cout << "\n\n";
+    topology.show_hops();
+    cout << "\n\n";
+    topology.show_graph();
+    cout << "\n\n";
 }
 
 
-unsigned int getCRC32(unsigned char* buf, unsigned long len) //crc32 0xEDB88320
+bool check_fcs(vector<uchar> data) {
+    unsigned int fcs = data[data.size() - 1] * 16777216 + data[data.size() - 2] * 65536 + data[data.size() - 3] * 256 + data[data.size() - 4];
+
+    if (fcs == get_CRC32(data, data.size() - 4)) {
+        return true;
+    }
+    return false;
+}
+
+
+unsigned int get_CRC32(vector<uchar> buf, unsigned long len) //crc32 0xEDB88320
 {
     unsigned long crc_table[256];
     unsigned long crc;
@@ -191,9 +179,9 @@ unsigned int getCRC32(unsigned char* buf, unsigned long len) //crc32 0xEDB88320
     };
     crc = 0xFFFFFFFFUL;
 
-    while (len--)
+    for (unsigned long i=0; i<len; i++)
     {
-        crc = crc_table[(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
+        crc = crc_table[(crc ^ buf[i]) & 0xFF] ^ (crc >> 8);
     }
 
     return crc ^ 0xFFFFFFFFUL;
@@ -211,20 +199,176 @@ string int_to_hex(unsigned int value)
     else
         result = stream.str();
 
-
     return result;
 }
+
 
 string int_to_bin(uchar value)
 {
     return bitset<8>(value).to_string();
 }
 
-string get_type(uchar value)
+
+void parse_data(vector<uchar> data)
 {
-    string value_bin = int_to_bin(value);
-    string type_bin = value_bin.substr(4, 2);
-    string sub_type_bin = value_bin.substr(0, 4);
+    //frame control
+    string frame_control = int_to_bin(data[0]) + int_to_bin(data[1]);
+    std::cout << "\t Frame control: " << frame_control << endl;
+
+    //get type/subtype
+    string type_bin = frame_control.substr(4, 2);
+    string subtype_bin = frame_control.substr(0, 4);
+    string type = get_type(type_bin, subtype_bin);
+    std::cout << "\t\t Type/subtype: " << type << endl;
+
+    //get to/from ds
+    string to_ds = frame_control.substr(15, 1);
+    string from_ds = frame_control.substr(14, 1);
+    std::cout << "\t\t To DS: " << to_ds << endl;
+    std::cout << "\t\t From DS: " << from_ds << endl;
+
+    //get Duration/ID
+    string duration_id = int_to_hex(data[2]) + int_to_hex(data[3]);
+    std::cout << "\t Duration/ID: " << duration_id << endl;
+
+    //get MAC
+    //type == Management
+    if (type_bin == "00") {
+        string mac_dst = get_mac(data, 4);
+        string mac_src = get_mac(data, 10);
+        string bssid = get_mac(data, 16);
+
+        std::cout << "\t mac_dst: " << mac_dst << endl;
+        std::cout << "\t mac_src: " << mac_src << endl;
+        std::cout << "\t bssid: " << bssid << endl;
+
+        topology.add_pair(mac_src, mac_dst, "00");
+        topology.set_type(bssid, "access point");
+    }
+    //type == Control
+    else if (type_bin == "01") {
+        //RTS, Block ACK request, Block ACK, Beamforming Report Poll, VHT/HE NDP Announcement
+        if (subtype_bin == "1011" || subtype_bin == "1000" || subtype_bin == "1001" || subtype_bin == "0100" || subtype_bin == "0101") {
+            string mac_receiver = get_mac(data, 4);
+            string mac_transmitter = get_mac(data, 10);
+
+            std::cout << "\t mac_receiver: " << mac_receiver << endl;
+            std::cout << "\t mac_transmitter: " << mac_transmitter << endl;
+
+            topology.add_pair(mac_receiver, mac_transmitter, "01");
+        }
+        //CTS, ACK, Control wrapper
+        else if (subtype_bin == "1100" || subtype_bin == "1101" || subtype_bin == "0111") {
+            string mac_receiver = get_mac(data, 4);
+
+            std::cout << "\t mac_receiver: " << mac_receiver << endl;
+
+            topology.add_pair(mac_receiver, "", "01");
+        }
+        //PS-POLL
+        else if (subtype_bin == "1010") {
+            string mac_receiver = get_mac(data, 4);
+            string mac_transmitter = get_mac(data, 10);
+
+            std::cout << "\t mac_receiver(BSSID): " << mac_receiver << endl;
+            std::cout << "\t mac_transmitter: " << mac_transmitter << endl;
+
+            topology.add_pair(mac_receiver, mac_transmitter, "01");
+            topology.set_type(mac_receiver, "access point");
+            topology.set_type(mac_transmitter, "client");
+        }
+        //CF-End/CF-END+CF-ACK
+        else if (subtype_bin == "1110" || subtype_bin == "1111") {
+            string mac_receiver = get_mac(data, 4);
+            string mac_transmitter = get_mac(data, 10);
+
+            std::cout << "\t mac_receiver: " << mac_receiver << endl;
+            std::cout << "\t mac_transmitter(BSSID): " << mac_transmitter << endl;
+
+            topology.add_pair(mac_receiver, mac_transmitter, "01");
+            topology.set_type(mac_receiver, "client");
+            topology.set_type(mac_transmitter, "access point");
+        }
+        //Control Frame Extension
+        else if (subtype_bin == "0110") {
+        }
+    }
+    //type == Data
+    else if (type_bin == "10") {
+        if (to_ds == "0" && from_ds == "0") {
+            string mac_dst = get_mac(data, 4);
+            string mac_src = get_mac(data, 10);
+            string bssid = get_mac(data, 16);
+
+            std::cout << "\t mac_dst: " << mac_dst << endl;
+            std::cout << "\t mac_src: " << mac_src << endl;
+            std::cout << "\t bssid: " << bssid << endl;
+
+            topology.add_pair(mac_src, mac_dst, "10");
+            topology.set_type(bssid, "access point");
+        }
+        else if (to_ds == "1" && from_ds == "0") {
+            string bssid = get_mac(data, 4);
+            string mac_src = get_mac(data, 10);
+            string mac_dst = get_mac(data, 16);
+
+            std::cout << "\t mac_dst: " << mac_dst << endl;
+            std::cout << "\t mac_src: " << mac_src << endl;
+            std::cout << "\t bssid: " << bssid << endl;
+
+            topology.add_pair(mac_src, mac_dst, "10");
+            topology.set_type(bssid, "access point");
+        }
+        else if (to_ds == "0" && from_ds == "1") {
+            string mac_dst = get_mac(data, 4);
+            string bssid = get_mac(data, 10);
+            string mac_src = get_mac(data, 16);
+
+            std::cout << "\t mac_dst: " << mac_dst << endl;
+            std::cout << "\t mac_src: " << mac_src << endl;
+            std::cout << "\t bssid: " << bssid << endl;
+
+            topology.add_pair(mac_src, mac_dst, "10");
+            topology.set_type(bssid, "access point");
+        }
+        else if (to_ds == "1" && from_ds == "1") {
+            string mac_receiver = get_mac(data, 4);
+            string mac_transmitter = get_mac(data, 10);
+            string mac_dst = get_mac(data, 16);
+            string mac_src = get_mac(data, 24);
+
+            std::cout << "\t mac_receiver: " << mac_receiver << endl;
+            std::cout << "\t mac_transmitter: " << mac_transmitter << endl;
+            std::cout << "\t mac_dst: " << mac_dst << endl;
+            std::cout << "\t mac_src: " << mac_src << endl;
+
+            topology.add_pair(mac_src, mac_transmitter, "10");
+            topology.add_pair(mac_transmitter, mac_receiver, "10");
+            topology.add_pair(mac_receiver, mac_dst, "10");
+
+            topology.set_type(mac_src, "client");
+            topology.set_type(mac_dst, "client");
+            topology.set_type(mac_receiver, "access point");
+            topology.set_type(mac_receiver, "access point");
+        }
+    }
+    // type == Extension
+    else if (type_bin == "11") { 
+    }
+
+    std::cout << endl;
+}
+
+string get_mac(vector<uchar> data, int pos) {
+    if (data.size() >= pos + 6)
+        return int_to_hex(data[pos]) + int_to_hex(data[pos + 1]) + int_to_hex(data[pos + 2]) + int_to_hex(data[pos + 3]) + int_to_hex(data[pos + 4]) + int_to_hex(data[pos + 5]);
+    else
+        return "";
+}
+
+
+string get_type(string type_bin, string sub_type_bin)
+{
     string type = "", subtype = "";
 
     if (type_bin == "00")
@@ -344,4 +488,3 @@ string get_type(uchar value)
 
     return type + "/" + subtype;
 }
-

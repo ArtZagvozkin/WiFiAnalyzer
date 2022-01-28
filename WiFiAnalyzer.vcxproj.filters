@@ -18,5 +18,11 @@
     <ClCompile Include="WiFiAnalyzer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Topology.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="VendorIdent.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

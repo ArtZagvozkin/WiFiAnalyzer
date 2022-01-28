@@ -139,6 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Topology.cpp" />
+    <ClCompile Include="VendorIdent.cpp" />
     <ClCompile Include="WiFiAnalyzer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
