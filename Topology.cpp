@@ -1,116 +1,159 @@
-#include <iostream>
-#include <vector>
-#include "VendorIdent.cpp" //в разработке
+#include "Topology.h"
 
-using namespace std;
+Topology::Topology() {
+	networks.clear();
+	graph.clear();
+}
 
-class Topology {
-private:
-	struct hop {
-		string mac;
-		string type;
-		string vendor;
-	};
-	vector<hop> hops;
+int Topology::add_network(string mac) {
+	//drop trash
+	if (mac == "" || mac == "unspecified" || mac == "ffffffffffff")
+		return -1;
 
-	struct edge {
-		string h1;
-		string h2;
-		int weight;
-	};
-	vector<edge> graph;
+	//checking for availability
+	for (int i = 0; i < networks.size(); i++)
+		if (networks[i].mac == mac)
+			return i;
 
-	int add_mac(string mac) {
-		if (mac == "")
-			mac = "unspecified";
+	//create new network
+	network new_network;
+	new_network.mac = mac;
+	new_network.ssid = "unknown";
+	new_network.vendor = vendor.find_vendor(mac);
+	networks.push_back(new_network);
 
-		for (int i = 0; i < hops.size(); i++)
-			if (hops[i].mac == mac)
-				return i;
+	return networks.size() - 1; //return network id
+}
 
-		hop new_hop;
-		new_hop.mac = mac;
-		new_hop.type = "unkwnown";
-		new_hop.vendor = "unkwnown";
-		hops.push_back(new_hop);
-		return hops.size() - 1;
+void Topology::set_ssid(string mac, string ssid) {
+	if (mac != "" && mac != "ffffffffffff")
+	{
+		int mac_id = 0;
+		mac_id = add_network(mac);
+		networks[mac_id].ssid = ssid;
+	}
+}
+
+int Topology::get_net_id(string mac) {
+	for (int i = 0; i < networks.size(); i++)
+		if (networks[i].mac == mac)
+			return i;
+	return -1;
+}
+
+int Topology::get_weight(string mac_src, string mac_dst) {
+	for (int i = 0; i < graph.size(); i++)
+		if (graph[i].mac_src == mac_src && graph[i].mac_dst == mac_dst)
+			return graph[i].weight;
+	return 0;
+}
+
+bool Topology::is_ap(string mac) { //is access point
+	for (int i = 0; i < networks.size(); i++)
+		if (networks[i].mac == mac)
+			return true;
+	return false;
+}
+
+void Topology::add_pair(string mac_src, string mac_dst, string type) {
+	if (mac_src == "")
+		mac_src = "unspecified";
+	if (mac_dst == "")
+		mac_dst = "unspecified";
+
+	if (is_ap(mac_src) && is_ap(mac_dst)) { //ap to ap
+		int net_id = get_net_id(mac_src);
+		networks[net_id].clients.insert(mac_dst);
+
+		net_id = get_net_id(mac_dst);
+		networks[net_id].clients.insert(mac_src);
+	}
+	else if (is_ap(mac_src) && !is_ap(mac_dst)) { //ap to station
+		int net_id = get_net_id(mac_src);
+		networks[net_id].clients.insert(mac_dst);
+	}
+	else if (!is_ap(mac_src) && is_ap(mac_dst)) { //station to ap
+		int net_id = get_net_id(mac_dst);
+		networks[net_id].clients.insert(mac_src);
 	}
 
-public:
-	Topology() {
-		hops.clear();
-		graph.clear();
-	}
-
-	void add_pair(string mac_src, string mac_dst, string type) {
-		add_mac(mac_src);
-		add_mac(mac_dst);
-
-		if (mac_src == "")
-			mac_src = "unspecified";
-		if (mac_dst == "")
-			mac_dst = "unspecified";
-
-		//search pair and return
-		for (int i = 0; i < graph.size(); i++)
-			if (graph[i].h1 == mac_src && graph[i].h2 == mac_dst)
-			{
-				graph[i].weight++;
-				return;
-			}
-
-		//add new edge, if not found
-		edge new_edge;
-		new_edge.h1 = mac_src;
-		new_edge.h2 = mac_dst;
-		new_edge.weight = 1;
-		graph.push_back(new_edge);
-	}
-
-	void set_type(string mac, string type) {
-		if (mac != "")
-		{
-			int mac_id = 0;
-			mac_id = add_mac(mac);
-			hops[mac_id].type = type;
+	//search pair and return
+	for (int i = 0; i < graph.size(); i++)
+		if (graph[i].mac_src == mac_src && graph[i].mac_dst == mac_dst) {
+			graph[i].weight++;
+			return;
 		}
+
+	//add new frame, if not found
+	edge new_edge;
+	new_edge.mac_src = mac_src;
+	new_edge.mac_dst = mac_dst;
+	new_edge.weight = 1;
+	graph.push_back(new_edge);
+}
+
+void Topology::show_net_stat() {
+	cout << "Networks:\n";
+
+	if (networks.size() == 0) {
+		cout << "\tNot detected" << endl;
+		return;
 	}
 
-	void show_graph() {
-		cout << "\n\nGraph(from\\to):\n\t";
+	vector<network> ::iterator net;
+	for (net = networks.begin(); net != networks.end(); net++) {
+		cout << "\tssid: " << net->ssid << endl;
+		cout << "\tmac: " << net->mac << endl;
+		cout << "\tvendor: " << net->vendor << endl;
+		cout << "\t\tClients \tIN \tOUT \tVendor \n";
 
-		for (int i = 0; i < hops.size(); i++)
-		{
-			cout << "\t" << hops[i].mac;
+		set<string> ::iterator client = net->clients.begin();
+		for (client = net->clients.begin(); client != net->clients.end(); client++) {
+			int in_frame = get_weight(net->mac, *client);
+			int out_frame = get_weight(*client, net->mac);
+			string vendor_name = vendor.find_vendor(*client);
+
+			cout << "\t\t" << *client << "\t" << in_frame << "\t" << out_frame << "\t" << vendor_name << "\n";
 		}
+
+		cout << endl;
+	}
+}
+
+void Topology::show_unknown_frames() {
+	cout << "Unknown network(from\\to):\n\t";
+
+	//get set of scr_mac and dst_mac
+	set<string> set_of_src_mac;
+	set<string> set_of_dst_mac;
+	for (int i = 0; i < graph.size(); i++) {
+		if (is_ap(graph[i].mac_src))
+			continue;
+		if (is_ap(graph[i].mac_dst))
+			continue;
+		set_of_src_mac.insert(graph[i].mac_src);
+		set_of_dst_mac.insert(graph[i].mac_dst);
+	}
+
+	if (set_of_src_mac.size() == 0 || set_of_dst_mac.size() == 0) {
+		cout << "\tNot detected" << endl;
+		return;
+	}
+
+	//Show graph head
+	set<string> ::iterator mac_dst;
+	for (mac_dst = set_of_dst_mac.begin(); mac_dst != set_of_dst_mac.end(); mac_dst++)
+		cout << "\t" << *mac_dst;
+	cout << "\n";
+
+	//Show graph data
+	set<string> ::iterator mac_src;
+	for (mac_src = set_of_src_mac.begin(); mac_src != set_of_src_mac.end(); mac_src++) {
+		cout << *mac_src;
+
+		for (mac_dst = set_of_dst_mac.begin(); mac_dst != set_of_dst_mac.end(); mac_dst++)
+			cout << "\t" << get_weight(*mac_src, *mac_dst) << "\t";
+
 		cout << "\n";
-		for (int i = 0; i < hops.size(); i++)
-		{
-			string curr_mac = hops[i].mac;
-			cout << curr_mac;
-
-			for (int j = 0; j < hops.size(); j++) {
-				int num = 0;
-				for (int k = 0; k < graph.size(); k++) {
-					if (graph[k].h1 == hops[i].mac && graph[k].h2 == hops[j].mac)
-						num = graph[k].weight;
-				}
-				cout << "\t" << num << "\t";
-			}
-
-			cout << "\n";
-		}
 	}
-
-	void show_hops() {
-		cout << "Mac addresses:\n";
-
-		for (int i = 0; i < hops.size(); i++)
-		{
-			cout << "Mac: " << i + 1 << endl;
-			cout << "\t mac: " << hops[i].mac << endl;
-			cout << "\t type: " << hops[i].type << endl;
-			cout << "\t vendor: " << hops[i].vendor << endl;
-		}
-	}
-};
+}

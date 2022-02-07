@@ -143,6 +143,10 @@
     <ClCompile Include="VendorIdent.cpp" />
     <ClCompile Include="WiFiAnalyzer.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Topology.h" />
+    <ClInclude Include="VendorIdent.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
