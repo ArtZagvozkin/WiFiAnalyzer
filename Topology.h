@@ -1,5 +1,5 @@
 #pragma once
-#include "VendorIdent.h"
+#include "MacInfo.h"
 #include <iostream>
 #include <vector>
 #include <set>
@@ -16,7 +16,7 @@ private:
 		set<string> clients;
 	};
 	vector<network> networks;
-	VendorIdent vendor = VendorIdent("Source/VendorMAC.txt");
+	MacInfo mac_info = MacInfo("Source/VendorMAC.txt");
 
 	struct edge {
 		string mac_src;
@@ -35,6 +35,7 @@ public:
 	void set_ssid(string mac, string ssid);
 	bool is_ap(string mac); //is access point?
 	void add_pair(string mac_src, string mac_dst, string type);
+	bool is_drons_ssid(string ssid);
 	void show_net_stat();
 	void show_unknown_frames();
 };

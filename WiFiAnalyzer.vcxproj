@@ -140,12 +140,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Topology.cpp" />
-    <ClCompile Include="VendorIdent.cpp" />
+    <ClCompile Include="MacInfo.cpp" />
     <ClCompile Include="WiFiAnalyzer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Topology.h" />
-    <ClInclude Include="VendorIdent.h" />
+    <ClInclude Include="MacInfo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

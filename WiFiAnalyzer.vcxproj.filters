@@ -21,7 +21,7 @@
     <ClCompile Include="Topology.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="VendorIdent.cpp">
+    <ClCompile Include="MacInfo.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="Topology.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="VendorIdent.h">
+    <ClInclude Include="MacInfo.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
   </ItemGroup>

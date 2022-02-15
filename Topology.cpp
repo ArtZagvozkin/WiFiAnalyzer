@@ -19,7 +19,7 @@ int Topology::add_network(string mac) {
 	network new_network;
 	new_network.mac = mac;
 	new_network.ssid = "unknown";
-	new_network.vendor = vendor.find_vendor(mac);
+	new_network.vendor = mac_info.get_vendor(mac);
 	networks.push_back(new_network);
 
 	return networks.size() - 1; //return network id
@@ -92,6 +92,16 @@ void Topology::add_pair(string mac_src, string mac_dst, string type) {
 	graph.push_back(new_edge);
 }
 
+bool Topology::is_drons_ssid(string ssid) {
+	if (ssid.find("skydio") != std::string::npos)
+		return true;
+	if (ssid.find("parrot") != std::string::npos)
+		return true;
+
+	return false;
+}
+
+
 void Topology::show_net_stat() {
 	cout << "Networks:\n";
 
@@ -102,18 +112,37 @@ void Topology::show_net_stat() {
 
 	vector<network> ::iterator net;
 	for (net = networks.begin(); net != networks.end(); net++) {
+		string net_type = "other";
+		if (is_drons_ssid(net->ssid))
+			net_type = "Drone";
+		else
+			net_type = mac_info.get_vendor_type(net->mac);
+
 		cout << "\tssid: " << net->ssid << endl;
+		cout << "\tdevice type: " << net_type << endl;
 		cout << "\tmac: " << net->mac << endl;
-		cout << "\tvendor: " << net->vendor << endl;
-		cout << "\t\tClients \tIN \tOUT \tVendor \n";
+		cout << "\tmac type: " << mac_info.get_type(net->mac) << endl;
+		cout << "\tIs drone manufacturer?: " << mac_info.get_vendor_type(net->mac) << endl;
+		cout << "\tvendor name: " << net->vendor << endl;
+		cout << "\t\tClients \tIN \tOUT \tdevice type \tMAC type \tIs drone manufacturer? \tVendor \n";
 
 		set<string> ::iterator client = net->clients.begin();
 		for (client = net->clients.begin(); client != net->clients.end(); client++) {
 			int in_frame = get_weight(net->mac, *client);
 			int out_frame = get_weight(*client, net->mac);
-			string vendor_name = vendor.find_vendor(*client);
+			string vendor_type = mac_info.get_vendor_type(*client);
+			string mac_type = mac_info.get_type(*client);
+			string vendor_name = mac_info.get_vendor(*client);
 
-			cout << "\t\t" << *client << "\t" << in_frame << "\t" << out_frame << "\t" << vendor_name << "\n";
+			//remote controller
+			string dev_type = mac_info.get_vendor_type(*client);
+			if (dev_type == "Drone")
+				dev_type = "Rem cont(drone)";
+			else
+				dev_type += "\t";
+
+			cout << "\t\t" << *client << "\t" << in_frame << "\t" << out_frame << "\t" 
+				<< dev_type << "\t" << mac_type << "\t" << vendor_type << "\t\t\t" << vendor_name << "\n";
 		}
 
 		cout << endl;

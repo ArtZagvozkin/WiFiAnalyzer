@@ -356,7 +356,7 @@ void parse_data(vector<uchar> data) {
             std::cout << "\t mac_src: " << mac_src << endl;
             std::cout << "\t bssid: " << bssid << endl;
 
-            topology.add_network(bssid);
+            //topology.add_network(bssid);
             topology.add_pair(mac_src, mac_dst, "10");
         }
         else if (to_ds == "1" && from_ds == "0") {
@@ -368,7 +368,7 @@ void parse_data(vector<uchar> data) {
             std::cout << "\t mac_src: " << mac_src << endl;
             std::cout << "\t bssid: " << bssid << endl;
 
-            topology.add_network(bssid);
+            //topology.add_network(bssid);
             topology.add_pair(mac_src, mac_dst, "10");
         }
         else if (to_ds == "0" && from_ds == "1") {
@@ -380,7 +380,7 @@ void parse_data(vector<uchar> data) {
             std::cout << "\t mac_src: " << mac_src << endl;
             std::cout << "\t bssid: " << bssid << endl;
 
-            topology.add_network(bssid);
+            //topology.add_network(bssid);
             topology.add_pair(mac_src, mac_dst, "10");
         }
         else if (to_ds == "1" && from_ds == "1") {
@@ -397,14 +397,14 @@ void parse_data(vector<uchar> data) {
             topology.add_pair(mac_src, mac_dst, "10");
 
             if (mac_src != mac_transmitter) {
-                topology.add_network(mac_transmitter);
+                //topology.add_network(mac_transmitter);
                 //topology.add_pair(mac_src, mac_transmitter, "10");
             }
             if (mac_transmitter != mac_receiver) {
                 //topology.add_pair(mac_transmitter, mac_receiver, "10");
             }
             if (mac_receiver != mac_dst) {
-                topology.add_network(mac_receiver);
+                //topology.add_network(mac_receiver);
                 //topology.add_pair(mac_receiver, mac_dst, "10");
             }
         }
@@ -435,7 +435,7 @@ string get_ssid(vector<uchar> data, int pos, int num) {
     string result = "";
 
     for (int i = 0; i < num; i++)
-        result += data[pos + i];
+        result += tolower(data[pos + i]);
 
     return result;
 }
@@ -568,7 +568,7 @@ string get_type(string type_bin, string sub_type_bin) {
 // - Проверить разбор фреймов на правильность входа/выхода
 // - Перепроверить методику подсчета fcs_ok
 //      Есть противоречие с .log файлами. Однако статистика совпадает с парсером wireshark
-// - Сверить количество фреймов с fcs_oks
+// - Сверить количество фреймов с fcs_ok
 // - Реализовать определение вендора по mac
 // - Вычистить код
 // - Пересобрать файлы по аналогии с имитатором от СТЦ

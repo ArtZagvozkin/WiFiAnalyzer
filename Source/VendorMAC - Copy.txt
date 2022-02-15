@@ -981,13 +981,13 @@
 0003D4:Alloptic, Inc.
 0003D5:Advanced Communications Co., Ltd.
 0003D6:RADVision, Ltd.
-0003D7:NextNet Wireless, Inc.			
-0003D8:iMPath Networks, Inc.			
-0003D9:Secheron SA						
+0003D7:NextNet Wireless, Inc.
+0003D8:iMPath Networks, Inc.
+0003D9:Secheron SA
 0003DA:Takamisawa Cybernetics Co., Ltd.
-0003DB:Apogee Electronics Corporate		
-0003DC:Lexar Media, Inc.				
-0003DD:Comark Interactive Solutions		
+0003DB:Apogee Electronics Corporate
+0003DC:Lexar Media, Inc.
+0003DD:Comark Interactive Solutions
 0003DE:OTC Wireless
 0003DF:Desana Systems
 0003E0:ARRIS Group, Inc.
@@ -998,9 +998,9 @@
 0003E5:Hermstedt SG
 0003E6:Entone, Inc.
 0003E7:Logostek Co. Ltd.
-6CDFFB:Beijing Fimi Tech Co, Ltd:Drone
+6CDFFB:Beijing Fimi Tech Co, Ltd
 9822EF:Liteon Tech Corporate
-381D14:Skydio Inc:Drone
+381D14:Skydio Inc
 48A472:Intel Corporate
 48F17F:Intel Corporate
 7CB27D:Intel Corporate
@@ -4614,7 +4614,7 @@ DAA119:Google, Inc
 001219:Ahead Communication Systems Inc
 00121A:Techno Soft Systemnics Inc.
 00121B:Sound Devices, LLC
-00121C:PARROT SA    :Drone
+00121C:PARROT SA
 00121D:Netfabric Corporation
 00121E:Juniper Networks
 00121F:Harding Instruments
@@ -9824,7 +9824,7 @@ DAA119:Google, Inc
 00267B:GSI Helmholtzzentrum für Schwerionenforschung GmbH
 00267C:Metz-Werke GmbH & Co KG
 00267D:A-Max Technology Macao Commercial Offshore Company Limited
-00267E:PARROT SA    :Drone
+00267E:PARROT SA
 00267F:Zenterio AB
 002680:SIL3 Pty.Ltd
 002681:Interspiro AB
@@ -15878,7 +15878,7 @@ DAA119:Google, Inc
 4C55CC:Zentri Pty Ltd
 4C57CA:Apple, Inc.
 4C5DCD:Oy Finnish Electric Vehicle Technologies Ltd
-4C5E0C:Mikrotikls SIA Riga LV1009
+4C5E0C:Routerboard.com
 4C5FD2:Alcatel- #Alcatel-Lucent
 4C60D5:airPointe of New Hampshire
 4C60DE:Netgear
@@ -17305,7 +17305,7 @@ DAA119:Google, Inc
 706173:Calantec GmbH
 7062B8:D-Link International
 706417:ORBIS TECNOLOGIA ELECTRICA S.A.
-706582:Suzhou Hanming Technologies Co., Ltd.:unknown    
+706582:Suzhou Hanming Technologies Co., Ltd.
 70661B:Sonova AG
 706879:Saijo Denki International Co., Ltd.
 706DEC:Wifi-soft LLC
@@ -18564,7 +18564,7 @@ DAA119:Google, Inc
 90028A:Shenzhen Shidean Legrand Electronic Products Co.,Ltd
 9002A9:Zhejiang Dahua Technology Co., Ltd.
 900325:HUAWEI TECHNOLOGIES CO.,LTD
-9003B7:PARROT SA    :Drone
+9003B7:PARROT SA
 900628:Samsung Electronics Co.,Ltd
 900917:Far-sighted mobile
 900A39:Wiio, Inc.
@@ -18603,7 +18603,7 @@ DAA119:Google, Inc
 903809:Ericsson AB
 9038DF:Changzhou Tiannengbo System Co. Ltd.
 903AA0:Nokia
-903AE6:PARROT SA    :Drone
+903AE6:PARROT SA
 903C92:Apple, Inc.
 903CAE:Yunnan KSEC Digital Technology Co.,Ltd.
 903D5A:Shenzhen Wision Technology Holding Limited
@@ -18987,6 +18987,7 @@ DAA119:Google, Inc
 98A7B0:MCST ZAO
 98AA3C:Will i-tech Co., Ltd.
 98AAD7:BLUE WAVE NETWORKING CO LTD
+98AAFC:IEEE Registration Authority
 98B039:Nokia
 98B6E9:Nintendo Co.,Ltd
 98B8E3:Apple, Inc.
@@ -19224,7 +19225,7 @@ A01290:Avaya Inc
 A012DB:TABUCHI ELECTRIC CO.,LTD
 A0133B:HiTi Digital, Inc.
 A013CB:Fiberhome Telecommunication Technologies Co.,LTD
-A0143D:PARROT SA    :Drone
+A0143D:PARROT SA
 A0165C:Triteka LTD
 A01828:Apple, Inc.
 A01859:Shenzhen Yidashi Electronics Co Ltd
@@ -23061,21 +23062,5 @@ FCFC48:Apple, Inc.
 FCFE77:Hitachi Reftechno, Inc.
 FCFEC2:Invensys Controls UK Limited
 FCFFAA:IEEE Registration Authority
-98AAFC:IEEE Registration Authority
-98AAFCE:Comarch S.A.
-98AAFCD:MCS Micronic Computer Systeme GmbH
-98AAFCC:dots Inc.
-98AAFCB:Resonant Systems Inc.
-98AAFCA:SENKO Co.,Ltd.
-98AAFC9:BEAM Authentic
-98AAFC8:Beijing Tiandi-Marco Electro-Hydraulic Control System Company Ltd.
-98AAFC7:Shenzhen Hubsan Technology:Drone
-98AAFC6:Mekotronics Co., Ltd
-98AAFC5:SPM Instrument AB
-98AAFC4:RPE "RADICO"
-98AAFC3:Nexus Electrical(Jiaxing) Limited
-98AAFC2:Shenzhen UniStrong Science & Technology Co., Ltd
-98AAFC1:SURTEC
-98AAFC0:Dalian Eastern Display Co., Ltd.
-FFFFFF:none	:none
-unspec:none	:none
+FFFFFF:Broadcast
+unspec:unspecified
